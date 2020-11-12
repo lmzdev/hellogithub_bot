@@ -1,17 +1,17 @@
 <?php
 
 include 'config.php';
-define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
+
 // config.php content:
 // define('BOT_TOKEN', 'XXXXX');
 //
 // https://api.telegram.org/botXXXXXXXX/setwebhook?url=https://leomenzel.de/bot.php?token=XXXXXXXX
 //
-//
 
-/**
- * 
- */
+define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
+define('BOT_NAME', 'hellogithub_bot');
+
+
 function apiRequestWebhook($method, $parameters)
 {
     if (!is_string($method)) {
@@ -182,7 +182,7 @@ function gEventPush($update)
 {
     $branch = array_pop(explode("/", $update["ref"]));
 
-    $msgText = "🔶 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
+    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
     // if ($update["repository"]["private"]) {
     //     $msgText .= " 🔒";
     // }
@@ -214,7 +214,7 @@ function gEventPing($update)
 
 function gEventIssues($update)
 {
-    $reponame = "<a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
+    $reponame = "in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     $msgText = "";
 
     if ($update["action"] == "opened") {
@@ -236,11 +236,13 @@ function gEventIssues($update)
 
 function gEventMember($update)
 {
-    $msgText = "🧑‍💻 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
+    $msgText = "🧑‍💻 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     if ($update["action"] == "added") {
         $msgText .= "\n<b>".$update["member"]["login"]."</b> has been added as a collaborator!"; 
     } elseif ($update["action"] == "removed") {
         $msgText .= "\n<b>".$update["member"]["login"]."</b> has been removed from this repository"; 
+    } else {
+        return;
     }
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
@@ -248,7 +250,7 @@ function gEventMember($update)
 function gEventDeployKey($update) 
 {
 
-    $msgText = "🔑 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
+    $msgText = "🔑 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     if ($update["action"] == "created") {
         $msgText .= "\n<b>".$update["sender"]["login"]."</b> added a new SSH key:";
         $msgText .= " <b>".$update["key"]["title"]."</b> \n<code>SHA256:".getFingerprint($update["key"]["key"])."</code>";
@@ -268,7 +270,7 @@ function gEventDeployKey($update)
 
 function gEventPullRequest($update)
 {
-    $msgText = "🔷 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"]."</a> ";
+    $msgText = "🔷 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"]."</a> ";
 
     if ($update["action"] == "opened" || $update["action"] == "reopened") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
@@ -286,13 +288,12 @@ function gEventPullRequest($update)
 
 }
 
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
 if (!$update) { //abort if request non json
-    echo "<a href='http://t.me/hellogithub_bot'>http://t.me/hellogithub_bot</a>";
+    echo "<a href='http://t.me/".BOT_NAME."'>http://t.me/".BOT_NAME."</a>";
     exit;
 }
 

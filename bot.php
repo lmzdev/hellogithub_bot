@@ -283,7 +283,6 @@ function gEventPullRequest($update)
         return;
     }
 
-
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 
 }

@@ -155,9 +155,10 @@ function processMessage($message)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256'){
-    if (substr($sshPublicKey, 0, 8) != 'ssh-rsa '){
-       return;
+function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
+{
+    if (substr($sshPublicKey, 0, 8) != 'ssh-rsa ') {
+        return;
     }
 
 
@@ -170,7 +171,7 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256'){
             $fingerprint = base64_encode(hash('sha256', base64_decode($content[1]), true));
             break;
         default:
-        break;
+            break;
     }
 
     return $fingerprint;
@@ -188,19 +189,24 @@ function gEventPush($update)
     // if ($update["repository"]["private"]) {
     //     $msgText .= " 🔒";
     // }
-    $msgText .= "</a> on <code>" . $ref . "/". $branch . " </code>\n";
+    $msgText .= "</a> on <code>" . $ref . "/" . $branch . " </code>\n";
     $msgText .= "<b>" . $update["sender"]["login"] . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
+    $it = 0;
     foreach ($update["commits"] as $commit) {
         $hash = substr($commit["id"], 0, 7);
         $msg = explode("\n", $commit["message"])[0];
 
         $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
 
-        $msgText .= "\n\n<a href='".$commit["url"]."' >" . $hash . "</a> from " . $datetime . " ";
+        $msgText .= "\n\n<a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
         $msgText .= "\n<b>" . $msg . "</b>";
         $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
         $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";
         $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
+        if ($it++ > 10) {
+            $msgText .= "\n\n...";
+            break;
+        }
     }
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
@@ -240,22 +246,22 @@ function gEventMember($update)
 {
     $msgText = "🧑‍💻 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     if ($update["action"] == "added") {
-        $msgText .= "\n<b>".$update["member"]["login"]."</b> has been added as a collaborator!"; 
+        $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been added as a collaborator!";
     } elseif ($update["action"] == "removed") {
-        $msgText .= "\n<b>".$update["member"]["login"]."</b> has been removed from this repository"; 
+        $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been removed from this repository";
     } else {
         return;
     }
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventDeployKey($update) 
+function gEventDeployKey($update)
 {
 
     $msgText = "🔑 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     if ($update["action"] == "created") {
-        $msgText .= "\n<b>".$update["sender"]["login"]."</b> added a new SSH key:";
-        $msgText .= " <b>".$update["key"]["title"]."</b> \n<code>SHA256:".getFingerprint($update["key"]["key"])."</code>";
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> added a new SSH key:";
+        $msgText .= " <b>" . $update["key"]["title"] . "</b> \n<code>SHA256:" . getFingerprint($update["key"]["key"]) . "</code>";
 
         if ($update["key"]["read_only"] == true) {
             $msgText .= "\nPermissions: <b>Read Only</b>";
@@ -263,8 +269,8 @@ function gEventDeployKey($update)
             $msgText .= "\nPermissions: <b>Read/Write</b>";
         }
     } else if ($update["action"] == "deleted") {
-        $msgText .= "\n<b>".$update["sender"]["login"]."</b> deleted a SSH key:";
-        $msgText .= " <b>".$update["key"]["title"]."</b>";
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> deleted a SSH key:";
+        $msgText .= " <b>" . $update["key"]["title"] . "</b>";
     }
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
@@ -272,21 +278,27 @@ function gEventDeployKey($update)
 
 function gEventPullRequest($update)
 {
-    $msgText = "🔷 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"]."</a> ";
+    $msgText = "🔷 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
 
     if ($update["action"] == "opened" || $update["action"] == "reopened") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
-        $msgText .= "\n<b>" . $update["pull_request"]["title"] ."</b>";
-        $msgText .= "\n<code>[" . $update["pull_request"]["base"]["repo"]["full_name"] ."] ".$update["pull_request"]["base"]["ref"];
-        $msgText .= " ⬅ [" . $update["pull_request"]["head"]["repo"]["full_name"] ."] ".$update["pull_request"]["head"]["ref"]."</code>";
+        $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
+        $msgText .= "\n<code>[" . $update["pull_request"]["base"]["repo"]["full_name"] . "] " . $update["pull_request"]["base"]["ref"];
+        $msgText .= " ⬅ [" . $update["pull_request"]["head"]["repo"]["full_name"] . "] " . $update["pull_request"]["head"]["ref"] . "</code>";
     } elseif ($update["action"] == "closed") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
-    } else {
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
+        if ($update["action"]["merged_at"] != "") {
+            $msgText .= "\n\n<b>#" . $update["pull_request"]["number"] . " was merged.</b>";
+        }
+    }  elseif ($update["action"] == "synchronize") {
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
+        // $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
+    }  else {
         return;
     }
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,7 +306,7 @@ $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
 if (!$update) { //abort if request non json
-    echo "<a href='http://t.me/".BOT_NAME."'>http://t.me/".BOT_NAME."</a>";
+    echo "<a href='http://t.me/" . BOT_NAME . "'>http://t.me/" . BOT_NAME . "</a>";
     exit;
 }
 
@@ -318,6 +330,5 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
     } elseif ($headerGitHubEvent == "pull_request") {
         gEventPullRequest($update);
     }
-
 } else {
 }

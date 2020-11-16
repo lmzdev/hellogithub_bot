@@ -219,15 +219,15 @@ function gEventIssues($update)
 
     if ($update["action"] == "opened") {
         $msgText .= "🟩 " . $reponame;
-        $msgText .= "\n<b>" . $update["issue"]["user"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] == "closed") {
         $msgText .= "🟥 " . $reponame;
-        $msgText .= "\n<b>" . $update["issue"]["user"]["login"] . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] == "reopened") {
         $msgText .= "🟨 " . $reponame;
-        $msgText .= "\n<b>" . $update["issue"]["user"]["login"] . "</b> re-opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> re-opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     }
 

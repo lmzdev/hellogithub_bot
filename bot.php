@@ -180,13 +180,15 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256'){
 
 function gEventPush($update)
 {
-    $branch = array_pop(explode("/", $update["ref"]));
+    $r = explode("/", $update["ref"]);
+    $branch = array_pop($r);
+    $ref = array_pop($r);
 
     $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
     // if ($update["repository"]["private"]) {
     //     $msgText .= " 🔒";
     // }
-    $msgText .= "</a> on branch <code>" . $branch . " </code>\n";
+    $msgText .= "</a> on <code>" . $ref . "/". $branch . " </code>\n";
     $msgText .= "<b>" . $update["sender"]["login"] . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
     foreach ($update["commits"] as $commit) {
         $hash = substr($commit["id"], 0, 7);
@@ -194,7 +196,7 @@ function gEventPush($update)
 
         $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
 
-        $msgText .= "\n\n<code>" . $hash . " | " . $datetime . "</code> ";
+        $msgText .= "\n\n<a href='".$commit["url"]."' >" . $hash . "</a> from " . $datetime . " ";
         $msgText .= "\n<b>" . $msg . "</b>";
         $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
         $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";

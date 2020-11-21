@@ -184,13 +184,21 @@ function gEventPush($update)
     $r = explode("/", $update["ref"]);
     $branch = array_pop($r);
     $ref = array_pop($r);
+    $u_name = $update["head_commit"]["author"]["username"];
+    if (! $u_name) {
+        $update["head_commit"]["author"]["name"];
+    }
+    if (! $u_name) {
+        $u_name = $update["sender"]["login"];
+    }
+
 
     $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
     // if ($update["repository"]["private"]) {
     //     $msgText .= " 🔒";
     // }
     $msgText .= "</a> on <code>" . $ref . "/" . $branch . " </code>\n";
-    $msgText .= "<b>" . $update["sender"]["login"] . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
+    $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
     $it = 0;
     foreach ($update["commits"] as $commit) {
         $hash = substr($commit["id"], 0, 7);

@@ -184,12 +184,15 @@ function gEventPush($update)
     $r = explode("/", $update["ref"]);
     $branch = array_pop($r);
     $ref = array_pop($r);
-    $u_name = $update["head_commit"]["author"]["username"];
-    if (! $u_name) {
-        $u_name = $update["head_commit"]["author"]["name"];
+
+    $u_name = $update["head_commit"]["author"]["name"];
+    if ($u_name) {
+        $u_name .= " (".$update["head_commit"]["author"]["username"].")";
+    } else {
+        $u_name = $update["head_commit"]["author"]["username"];
     }
-    if (! $u_name) {
-        $u_name = $update["sender"]["login"];
+    if (!$u_name) {
+        $u_name = $update["sender"]["login"];    
     }
 
 

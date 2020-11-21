@@ -186,7 +186,7 @@ function gEventPush($update)
     $ref = array_pop($r);
     $u_name = $update["head_commit"]["author"]["username"];
     if (! $u_name) {
-        $update["head_commit"]["author"]["name"];
+        $u_name = $update["head_commit"]["author"]["name"];
     }
     if (! $u_name) {
         $u_name = $update["sender"]["login"];

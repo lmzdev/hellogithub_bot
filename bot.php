@@ -177,15 +177,9 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
     return $fingerprint;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function gEventPush($update)
-{
-    $r = explode("/", $update["ref"]);
-    $branch = array_pop($r);
-    $ref = array_pop($r);
-
+function makeName($update) {
     $u_name = $update["head_commit"]["author"]["name"];
+
     if ($u_name && $update["head_commit"]["author"]["username"]) {
         $u_name .= " (".$update["head_commit"]["author"]["username"].")";
     } 
@@ -195,6 +189,21 @@ function gEventPush($update)
     if (!$u_name) {
         $u_name = $update["sender"]["login"];    
     }
+    return $u_name;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function gEventPush($update)
+{
+    if (count($update["commits"]) == 0) {
+        return;
+    }
+    $r = explode("/", $update["ref"]);
+    $branch = array_pop($r);
+    $ref = array_pop($r);
+
+    $u_name = makeName($update);
 
 
     $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
@@ -313,12 +322,27 @@ function gEventPullRequest($update)
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
+function gEventCreateRef($update) {
+    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText .= "\n<b>" . makeName($update) . "</b> created ".$update["ref_type"]." <code>".$update["ref"]."</code>";
+
+    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
+
+function gEventDeleteRef($update){
+    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText .= "\n<b>" . makeName($update) . "</b> deleted ".$update["ref_type"]." <code>".$update["ref"]."</code>";
+
+    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
 if (!$update) { //abort if request non json
-    echo "<a href='http://t.me/" . BOT_NAME . "'>http://t.me/" . BOT_NAME . "</a>";
+    echo "<p><a href='http://t.me/" . BOT_NAME . "'>http://t.me/" . BOT_NAME . "</a></p>";
     exit;
 }
 
@@ -328,6 +352,7 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
     }
 } elseif ($_GET["chatid"]) {
     $headerGitHubEvent = $_SERVER['HTTP_X_GITHUB_EVENT'];
+    // $filter=$_GET["branch"];
 
     if ($headerGitHubEvent == "push") {
         gEventPush($update);
@@ -341,6 +366,10 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
         gEventDeployKey($update);
     } elseif ($headerGitHubEvent == "pull_request") {
         gEventPullRequest($update);
+    } elseif ($headerGitHubEvent == "delete") {
+        gEventDeleteRef($update);
+    } elseif ($headerGitHubEvent == "create") {
+        gEventCreateRef($update);
     }
 } else {
 }

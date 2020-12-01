@@ -1,10 +1,5 @@
 # hellogithub_bot
-Get GitHub notifications via Telegram bot.
-
-### How does it work?
-You can add webhook urls to your repositories, which get called in case of specific events. 
-
-I wanted my notifications to be only one-way, as simple as possible and in Telegram.
+Get GitHub notifications in Telegram.
 
 ### Advantages
 * No Signup

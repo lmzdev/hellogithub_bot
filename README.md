@@ -1,23 +1,24 @@
 # hellogithub_bot
 Get GitHub notifications in Telegram.
 
-### Advantages
+## Advantages
 * No Signup
 * Notifications only, no write access
 * No external Services like Zapier or IFTTT required
 * Can self-host on shared hosting plans, no Node.js required. Bot is written in PHP.
 
-## You can use my already existing bot
+## Usage
+### You can use my already existing bot...
 1. 🔗 Go to [t.me/hellogithub_bot](https://t.me/hellogithub_bot)
 2. 🤖 Start Bot and copy webhook url
 3. 📋 Add webhook url to your repository
 4. ✅ Get notified!
 
-## ... or you can host your own
+### ... or you can host your own
 1. Create a new bot with [@BotFather](https://t.me/BotFather)
 1. Upload ```bot.php``` to your webspace
-2. Add ```config.php``` containing your Bot-Token
-1. Tell Telegram to use your Bot with ```bot.php?webhook&token=<yourbottoken>```
+2. Add a ```config.php``` containing your Bot-Token
+1. Tell Telegram to use your Bot by calling ```bot.php?webhook&token=<yourbottoken>```
 1. 🤖 Start your Bot and copy webhook url
 3. 📋 Add webhook url to your repository
 4. ✅ Get notified!

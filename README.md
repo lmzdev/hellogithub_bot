@@ -27,3 +27,4 @@ Hellogithub_bot currently supports the following types of [HTTP_X_GITHUB_EVENT](
 * ```pull_request```
 * ```delete```
 * ```create```
+* ```public```

@@ -189,6 +189,10 @@ function makeName($update) {
     return $u_name;
 }
 
+function makeRepoName($update) {
+    return "<a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"]."</a>";
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function gEventPush($update)
@@ -202,11 +206,9 @@ function gEventPush($update)
 
     $u_name = makeName($update);
 
-    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
-    // if ($update["repository"]["private"]) {
-    //     $msgText .= " 🔒";
-    // }
-    $msgText .= "</a> on <code>" . $ref . "/" . $branch . " </code>\n";
+    $msgText = "🔶 in " . makeRepoName($update);
+
+    $msgText .= " on <code>" . $ref . "/" . $branch . " </code>\n";
     $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
     $it = 0;
     foreach ($update["commits"] as $commit) {
@@ -239,19 +241,18 @@ function gEventPing($update)
 
 function gEventIssues($update)
 {
-    $reponame = "in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     $msgText = "";
-
+    $reponame = " in ".makeRepoName($update);
     if ($update["action"] == "opened") {
-        $msgText .= "🟩 " . $reponame;
+        $msgText .= "🟩" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] == "closed") {
-        $msgText .= "🟥 " . $reponame;
+        $msgText .= "🟥" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] == "reopened") {
-        $msgText .= "🟨 " . $reponame;
+        $msgText .= "🟨" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> re-opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     }
@@ -261,7 +262,7 @@ function gEventIssues($update)
 
 function gEventMember($update)
 {
-    $msgText = "🧑‍💻 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
+    $msgText = "🧑‍💻 in " . makeRepoName($update); 
     if ($update["action"] == "added") {
         $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been added as a collaborator!";
     } elseif ($update["action"] == "removed") {
@@ -274,7 +275,7 @@ function gEventMember($update)
 
 function gEventDeployKey($update)
 {
-    $msgText = "🔑 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
+    $msgText = "🔑 in " . makeRepoName($update);
     if ($update["action"] == "created") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> added a new SSH key:";
         $msgText .= " <b>" . $update["key"]["title"] . "</b> \n<code>SHA256:" . getFingerprint($update["key"]["key"]) . "</code>";
@@ -294,7 +295,7 @@ function gEventDeployKey($update)
 
 function gEventPullRequest($update)
 {
-    $msgText = "🔷 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText = "🔷 in " . makeRepoName($update);
 
     if ($update["action"] == "opened" || $update["action"] == "reopened") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
@@ -318,21 +319,21 @@ function gEventPullRequest($update)
 }
 
 function gEventCreateRef($update) {
-    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText = "🔶 in " . makeRepoName($update);
     $msgText .= "\n<b>" . makeName($update) . "</b> created ".$update["ref_type"]." <code>".$update["ref"]."</code>";
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
 function gEventDeleteRef($update){
-    $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText = "🔶 in " . makeRepoName($update);
     $msgText .= "\n<b>" . makeName($update) . "</b> deleted ".$update["ref_type"]." <code>".$update["ref"]."</code>";
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
 function gEventPublic($update) {
-    $msgText = "🎉 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText = "🎉 " . makeRepoName($update);
     $msgText .= "\nis now publicly available!";
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
@@ -341,7 +342,6 @@ function gEventPublic($update) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
-
 
 if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot api
     if (isset($update["message"])) {
@@ -354,7 +354,6 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
         curl_setopt($handle, CURLOPT_TIMEOUT, 60);
         exec_curl_request($handle);
     }
-
     exit;
 }
 

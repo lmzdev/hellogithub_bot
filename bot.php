@@ -1,16 +1,15 @@
 <?php
-
 include 'config.php';
-
 // config.php content:
+// <?php
 // define('BOT_TOKEN', 'XXXXX');
-//
-// https://api.telegram.org/botXXXXXXXX/setwebhook?url=https://leomenzel.de/bot.php?token=XXXXXXXX
-//
 
+
+DEFINE('BOT_URL',$_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
 define('BOT_NAME', 'hellogithub_bot');
 
+setlocale(LC_TIME, "de_DE");
 
 function apiRequestWebhook($method, $parameters)
 {
@@ -139,7 +138,7 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $compose_url = 'https://leomenzel.de/bot.php?chatid=';
+            $compose_url = BOT_URL.'?chatid=';
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings</i>  and add this URL as new JSON encoded Webhook: \n\n<code>" . $compose_url . $chat_id . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } else if ($text === "Hello" || $text === "Hi") {
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you'));
@@ -341,16 +340,29 @@ function gEventDeleteRef($update){
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
+
+if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot api
+    if (isset($update["message"])) {
+        processMessage($update["message"]);
+    } elseif (isset($_GET["webhook"])) {
+        $tgUri = API_URL . "setwebhook?url=" . BOT_URL . "?token=" . BOT_TOKEN;
+        print($tgUri);
+        $handle = curl_init($tgUri);
+        curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($handle, CURLOPT_TIMEOUT, 60);
+        exec_curl_request($handle);
+    }
+
+    exit;
+}
+
 if (!$update) { //abort if request non json
     echo "<p><a href='http://t.me/" . BOT_NAME . "'>http://t.me/" . BOT_NAME . "</a></p>";
     exit;
 }
 
-if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot api
-    if (isset($update["message"])) {
-        processMessage($update["message"]);
-    }
-} elseif ($_GET["chatid"]) {
+if ($_GET["chatid"]) {
+
     $headerGitHubEvent = $_SERVER['HTTP_X_GITHUB_EVENT'];
     // $filter=$_GET["branch"];
 
@@ -372,4 +384,5 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
         gEventCreateRef($update);
     }
 } else {
+   
 }

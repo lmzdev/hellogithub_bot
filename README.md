@@ -1,7 +1,7 @@
 # hellogithub_bot
 Ever wanted to keep track of your repositories the easiest way possible? This tool bridges GitHub's webhook notifications to a Telegram-Bot.
 
-## Usage
+## 🔶 Usage
 ### You can use my already existing bot...
 1. 🔗 Go to [t.me/hellogithub_bot](https://t.me/hellogithub_bot)
 2. 🤖 Start Bot and copy webhook url
@@ -17,7 +17,7 @@ Ever wanted to keep track of your repositories the easiest way possible? This to
 3. 📋 Add webhook url to your repository
 4. ✅ Get notified!
 
-## Supported GitHub Events
+## 🔶 Supported GitHub Events
 Hellogithub_bot currently supports the following types of [HTTP_X_GITHUB_EVENT](https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads)
 * ```push```
 * ```ping```

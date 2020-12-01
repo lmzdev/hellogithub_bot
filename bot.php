@@ -138,8 +138,9 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $compose_url = BOT_URL.'?chatid=';
-            apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings</i>  and add this URL as new JSON encoded Webhook: \n\n<code>" . $compose_url . $chat_id . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
+            $welcome_msg = "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings </i>  and add this URL as new Webhook (application/JSON): \n\n";
+            $compose_url = BOT_URL . '?chatid=' . $chat_id;
+            apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } else if ($text === "Hello" || $text === "Hi") {
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you'));
         } else if (strpos($text, "/stop") === 0) {
@@ -159,8 +160,6 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
     if (substr($sshPublicKey, 0, 8) != 'ssh-rsa ') {
         return;
     }
-
-
     $content = explode(' ', $sshPublicKey, 3);
     switch ($hashAlgorithm) {
         case 'md5':
@@ -172,7 +171,6 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
         default:
             break;
     }
-
     return $fingerprint;
 }
 
@@ -204,7 +202,6 @@ function gEventPush($update)
 
     $u_name = makeName($update);
 
-
     $msgText = "🔶 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"];
     // if ($update["repository"]["private"]) {
     //     $msgText .= " 🔒";
@@ -223,7 +220,7 @@ function gEventPush($update)
         $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
         $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";
         $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
-        if ($it++ > 10) {
+        if ($it++ > 6) {
             $msgText .= "\n\n...";
             break;
         }
@@ -277,7 +274,6 @@ function gEventMember($update)
 
 function gEventDeployKey($update)
 {
-
     $msgText = "🔑 in <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
     if ($update["action"] == "created") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> added a new SSH key:";
@@ -304,7 +300,7 @@ function gEventPullRequest($update)
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
         $msgText .= "\n<code>[" . $update["pull_request"]["base"]["repo"]["full_name"] . "] " . $update["pull_request"]["base"]["ref"];
-        $msgText .= " ⬅ [" . $update["pull_request"]["head"]["repo"]["full_name"] . "] " . $update["pull_request"]["head"]["ref"] . "</code>";
+        $msgText .= " ← [" . $update["pull_request"]["head"]["repo"]["full_name"] . "] " . $update["pull_request"]["head"]["ref"] . "</code>";
     } elseif ($update["action"] == "closed") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
@@ -335,6 +331,12 @@ function gEventDeleteRef($update){
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
+function gEventPublic($update) {
+    $msgText = "🎉 <a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a> ";
+    $msgText .= "\nis now publicly available!";
+
+    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
@@ -382,6 +384,8 @@ if ($_GET["chatid"]) {
         gEventDeleteRef($update);
     } elseif ($headerGitHubEvent == "create") {
         gEventCreateRef($update);
+    } elseif ($headerGitHubEvent == "public") {
+        gEventPublic($update);
     }
 } else {
    

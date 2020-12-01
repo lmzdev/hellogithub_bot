@@ -1,5 +1,5 @@
 # hellogithub_bot
-Get GitHub notifications in Telegram.
+Ever wanted to keep track of your repositories the easiest way possible? This tool bridges GitHub's webhook notifications to a Telegram-Bot.
 
 ## Advantages
 * No Signup

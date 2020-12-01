@@ -1,12 +1,6 @@
 # hellogithub_bot
 Ever wanted to keep track of your repositories the easiest way possible? This tool bridges GitHub's webhook notifications to a Telegram-Bot.
 
-## Advantages
-* No Signup
-* Notifications only, no write access
-* No external Services like Zapier or IFTTT required
-* Can self-host on shared hosting plans, no Node.js required. Bot is written in PHP.
-
 ## Usage
 ### You can use my already existing bot...
 1. 🔗 Go to [t.me/hellogithub_bot](https://t.me/hellogithub_bot)

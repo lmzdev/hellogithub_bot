@@ -4,12 +4,13 @@ include 'config.php';
 // <?php
 // define('BOT_TOKEN', 'XXXXX');
 
+// Name of your Bot:
+define('BOT_NAME', 'hellogithub_bot');
+//Set locale for Timestrings
+setlocale(LC_TIME, "de_DE");
 
 DEFINE('BOT_URL',$_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
-define('BOT_NAME', 'hellogithub_bot');
-
-setlocale(LC_TIME, "de_DE");
 
 function apiRequestWebhook($method, $parameters)
 {
@@ -126,8 +127,6 @@ function apiRequestJson($method, $parameters)
     return exec_curl_request($handle);
 }
 
-//  \u{1F64B}
-
 function processMessage($message)
 {
     // process incoming message
@@ -138,7 +137,7 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $welcome_msg = "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings </i>  and add this URL as new Webhook (application/JSON): \n\n";
+            $welcome_msg = "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings</i>  and add this URL as new Webhook (application/JSON): \n\n";
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } else if ($text === "Hello" || $text === "Hi") {
@@ -147,7 +146,7 @@ function processMessage($message)
             // stop now
         }
     } else {
-        // apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'I only do text messages'));
+
     }
 }
 

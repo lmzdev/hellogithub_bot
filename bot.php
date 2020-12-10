@@ -175,14 +175,22 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
 }
 
 function makeName($update) {
-    $u_name = $update["head_commit"]["author"]["name"];
+    # Head commit has a username, but it differs from the one who pushed -> return who pushed
+    # ...if someone else merges your branch or pull request
+    if ($update["head_commit"]["author"]["username"] && $update["head_commit"]["author"]["username"] != $update["sender"]["login"]) {
+        return $update["sender"]["login"];
+    }
 
+    # Try to get 'name(username)' from head commit
+    $u_name = $update["head_commit"]["author"]["name"];
     if ($u_name && $update["head_commit"]["author"]["username"]) {
         $u_name .= " (".$update["head_commit"]["author"]["username"].")";
     } 
+    # From head commit: If no name specified, try username only 
     if (!$u_name) {
         $u_name = $update["head_commit"]["author"]["username"];
     }
+    # Default to username who pushed
     if (!$u_name) {
         $u_name = $update["sender"]["login"];    
     }

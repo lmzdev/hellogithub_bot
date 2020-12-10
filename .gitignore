@@ -1,2 +1,4 @@
 # Exclude config.php, it contains your bot token
 config.php
+.vscode
+.vscode/*

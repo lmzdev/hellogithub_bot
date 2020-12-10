@@ -9,8 +9,9 @@ define('BOT_NAME', 'hellogithub_bot');
 //Set locale for Timestrings
 setlocale(LC_TIME, "de_DE");
 
-DEFINE('BOT_URL',$_SERVER["SCRIPT_URI"]);
+define('BOT_URL',$_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
+define('G_SHOWMAXCOMMITS',5);
 
 function apiRequestWebhook($method, $parameters)
 {
@@ -221,7 +222,7 @@ function gEventPush($update)
         $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
         $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";
         $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
-        if ($it++ > 6) {
+        if ($it++ >= G_SHOWMAXCOMMITS) {
             $msgText .= "\n\n...";
             break;
         }

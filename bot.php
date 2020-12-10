@@ -313,8 +313,10 @@ function gEventPullRequest($update)
     } elseif ($update["action"] == "closed") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
-        if ($update["action"]["merged_at"] != "") {
-            $msgText .= "\n\n<b>#" . $update["pull_request"]["number"] . " was merged.</b>";
+        if ($update["pull_request"]["merged"] == true) {
+            $msgText .= "\n\n✅ <b>#" . $update["pull_request"]["number"] . " successfully merged!</b>";
+        } else {
+            $msgText .= "\n\n⛔ <b>#" . $update["pull_request"]["number"] . " was closed.</b>";
         }
     }  elseif ($update["action"] == "synchronize") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";

@@ -9,9 +9,9 @@ define('BOT_NAME', 'hellogithub_bot');
 //Set locale for Timestrings
 setlocale(LC_TIME, "de_DE");
 
-define('BOT_URL',$_SERVER["SCRIPT_URI"]);
+define('BOT_URL', $_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
-define('G_SHOWMAXCOMMITS',5);
+define('G_SHOWMAXCOMMITS', 5);
 
 function apiRequestWebhook($method, $parameters)
 {
@@ -147,7 +147,6 @@ function processMessage($message)
             // stop now
         }
     } else {
-
     }
 }
 
@@ -174,7 +173,8 @@ function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
     return $fingerprint;
 }
 
-function makeName($update) {
+function makeName($update)
+{
     # Head commit has a username, but it differs from the one who pushed -> return who pushed
     # ...if someone else merges your branch or pull request
     if ($update["head_commit"]["author"]["username"] && $update["head_commit"]["author"]["username"] != $update["sender"]["login"]) {
@@ -184,21 +184,22 @@ function makeName($update) {
     # Try to get 'name(username)' from head commit
     $u_name = $update["head_commit"]["author"]["name"];
     if ($u_name && $update["head_commit"]["author"]["username"]) {
-        $u_name .= " (".$update["head_commit"]["author"]["username"].")";
-    } 
+        $u_name .= " (" . $update["head_commit"]["author"]["username"] . ")";
+    }
     # From head commit: If no name specified, try username only 
     if (!$u_name) {
         $u_name = $update["head_commit"]["author"]["username"];
     }
     # Default to username who pushed
     if (!$u_name) {
-        $u_name = $update["sender"]["login"];    
+        $u_name = $update["sender"]["login"];
     }
     return $u_name;
 }
 
-function makeRepoName($update) {
-    return "<a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"]."</a>";
+function makeRepoName($update)
+{
+    return "<a href='" . $update["repository"]["html_url"] . "' >" . $update["repository"]["full_name"] . "</a>";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,25 +216,33 @@ function gEventPush($update)
     $u_name = makeName($update);
 
     $msgText = "🔶 in " . makeRepoName($update);
-
     $msgText .= " on <code>" . $ref . "/" . $branch . " </code>\n";
     $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
-    $it = 0;
-    foreach ($update["commits"] as $commit) {
+
+    if (count($update["commits"]) <= G_SHOWMAXCOMMITS) {
+        foreach ($update["commits"] as $commit) {
+            $hash = substr($commit["id"], 0, 7);
+            $msg = explode("\n", $commit["message"])[0];
+            $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
+
+            $msgText .= "\n\n<a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
+            $msgText .= "\n<b>" . $msg . "</b>";
+            $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
+            $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";
+            $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
+        }
+    } else {
+        $commit = $update["head_commit"];
         $hash = substr($commit["id"], 0, 7);
         $msg = explode("\n", $commit["message"])[0];
-
         $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
 
-        $msgText .= "\n\n<a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
+        $msgText .= "\n\nHEAD at <a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
         $msgText .= "\n<b>" . $msg . "</b>";
         $msgText .= "\nModified: <b>" . count($commit["modified"]) . "</b> | ";
         $msgText .= "New: <b>" . count($commit["added"]) . "</b> | ";
         $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
-        if ($it++ >= G_SHOWMAXCOMMITS) {
-            $msgText .= "\n\n...";
-            break;
-        }
+        $msgText .= "\n...";
     }
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
@@ -250,7 +259,7 @@ function gEventPing($update)
 function gEventIssues($update)
 {
     $msgText = "";
-    $reponame = " in ".makeRepoName($update);
+    $reponame = " in " . makeRepoName($update);
     if ($update["action"] == "opened") {
         $msgText .= "🟩" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
@@ -270,7 +279,7 @@ function gEventIssues($update)
 
 function gEventMember($update)
 {
-    $msgText = "🧑‍💻 in " . makeRepoName($update); 
+    $msgText = "🧑‍💻 in " . makeRepoName($update);
     if ($update["action"] == "added") {
         $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been added as a collaborator!";
     } elseif ($update["action"] == "removed") {
@@ -318,31 +327,34 @@ function gEventPullRequest($update)
         } else {
             $msgText .= "\n\n⛔ <b>#" . $update["pull_request"]["number"] . " was closed.</b>";
         }
-    }  elseif ($update["action"] == "synchronize") {
+    } elseif ($update["action"] == "synchronize") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
         // $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
-    }  else {
+    } else {
         return;
     }
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventCreateRef($update) {
+function gEventCreateRef($update)
+{
     $msgText = "🔶 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update) . "</b> created ".$update["ref_type"]." <code>".$update["ref"]."</code>";
+    $msgText .= "\n<b>" . makeName($update) . "</b> created " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventDeleteRef($update){
+function gEventDeleteRef($update)
+{
     $msgText = "🔶 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update) . "</b> deleted ".$update["ref_type"]." <code>".$update["ref"]."</code>";
+    $msgText .= "\n<b>" . makeName($update) . "</b> deleted " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventPublic($update) {
+function gEventPublic($update)
+{
     $msgText = "🎉 " . makeRepoName($update);
     $msgText .= "\nis now publicly available!";
 
@@ -397,5 +409,4 @@ if ($_GET["chatid"]) {
         gEventPublic($update);
     }
 } else {
-   
 }

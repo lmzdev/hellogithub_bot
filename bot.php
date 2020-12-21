@@ -361,6 +361,26 @@ function gEventPublic($update)
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
+function gEventRepository($update) 
+{
+    $msgText = "🔶 in " . makeRepoName($update);
+
+    if ($update["action"] == "edited" && $update["changes"]["default_branch"]) {
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> changed default branch from <code>" . $update["changes"]["default_branch"]["from"] . "</code> to <code>" . $update["repository"]["default_branch"] . "</code>";
+    } elseif ($update["action"] == "deleted"){
+        $msgText .= "\n🗑 <b>" . $update["sender"]["login"] . "</b> deleted the repository.";
+    } elseif ($update["action"] == "archived"){
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> archived the repository.";
+    } elseif ($update["action"] == "unarchived"){
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> restored the repository from archive.";
+    } elseif ($update["action"] == "renamed"){
+        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> renamed the repository.";
+    } else {
+        return;
+    }
+    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
@@ -407,6 +427,8 @@ if ($_GET["chatid"]) {
         gEventCreateRef($update);
     } elseif ($headerGitHubEvent == "public") {
         gEventPublic($update);
+    } elseif ($headerGitHubEvent == "repository") {
+        gEventRepository($update);
     }
 } else {
 }

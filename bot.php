@@ -220,7 +220,8 @@ function gEventPush($update)
     $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
 
     if (count($update["commits"]) <= G_SHOWMAXCOMMITS) {
-        foreach ($update["commits"] as $commit) {
+        $all_commits = array_reverse($update["commits"]);
+        foreach ($all_commits as $commit) {
             $hash = substr($commit["id"], 0, 7);
             $msg = explode("\n", $commit["message"])[0];
             $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");

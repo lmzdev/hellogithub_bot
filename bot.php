@@ -8,6 +8,7 @@ include 'config.php';
 define('BOT_NAME', 'hellogithub_bot');
 //Set locale for Timestrings
 setlocale(LC_TIME, "de_DE");
+define('DATETIME_FORMAT', "d.m., H:i:s");
 
 define('BOT_URL', $_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
@@ -224,7 +225,7 @@ function gEventPush($update)
         foreach ($all_commits as $commit) {
             $hash = substr($commit["id"], 0, 7);
             $msg = explode("\n", $commit["message"])[0];
-            $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
+            $datetime = date_format(date_create($commit["timestamp"]), DATETIME_FORMAT);
 
             $msgText .= "\n\n<a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
             $msgText .= "\n<b>" . $msg . "</b>";

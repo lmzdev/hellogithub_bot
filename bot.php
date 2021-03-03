@@ -8,7 +8,7 @@ include 'config.php';
 define('BOT_NAME', 'hellogithub_bot');
 //Set locale for Timestrings
 setlocale(LC_TIME, "de_DE");
-define('DATETIME_FORMAT', "d.m., H:i:s");
+define('DATETIME_FORMAT', "d.m.y - H:i:s");
 
 define('BOT_URL', $_SERVER["SCRIPT_URI"]);
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
@@ -383,6 +383,26 @@ function gEventRepository($update)
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
+function gEventRelease($update) {
+    $msgText = "🚀 in " . makeRepoName($update);
+    $relName = $update["release"]["name"];
+    if (! $relName || $relName == "") {
+        $relName = $update["release"]["tag_name"];
+    }
+
+    if ($update["action"] == "published") {
+        $msgText .= "\n<b>" . makeName($update) . "</b> published ";
+        if ($update["release"]["prerelease"] == true) {
+            $msgText .= "pre-";
+        }
+        $msgText .= "release\n  <a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a>" ;
+    } else {
+        return;
+    }
+    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
@@ -431,6 +451,8 @@ if ($_GET["chatid"]) {
         gEventPublic($update);
     } elseif ($headerGitHubEvent == "repository") {
         gEventRepository($update);
+    } elseif ($headerGitHubEvent == "release") {
+        gEventRelease($update);
     }
 } else {
 }

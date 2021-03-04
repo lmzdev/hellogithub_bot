@@ -85,7 +85,9 @@ function apiRequest($method, $parameters)
         error_log("Parameters must be an array\n");
         return false;
     }
-    $parameters['parse_mode'] = "html";
+    if ($parameters['parse_mode'] == "") {
+        $parameters['parse_mode'] = "html";
+    }
     foreach ($parameters as $key => &$val) {
         // encoding to JSON array parameters, for example reply_markup
         if (!is_numeric($val) && !is_string($val)) {
@@ -363,19 +365,19 @@ function gEventPublic($update)
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventRepository($update) 
+function gEventRepository($update)
 {
     $msgText = "🔶 in " . makeRepoName($update);
 
     if ($update["action"] == "edited" && $update["changes"]["default_branch"]) {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> changed default branch from <code>" . $update["changes"]["default_branch"]["from"] . "</code> to <code>" . $update["repository"]["default_branch"] . "</code>";
-    } elseif ($update["action"] == "deleted"){
+    } elseif ($update["action"] == "deleted") {
         $msgText .= "\n🗑 <b>" . $update["sender"]["login"] . "</b> deleted the repository.";
-    } elseif ($update["action"] == "archived"){
+    } elseif ($update["action"] == "archived") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> archived the repository.";
-    } elseif ($update["action"] == "unarchived"){
+    } elseif ($update["action"] == "unarchived") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> restored the repository from archive.";
-    } elseif ($update["action"] == "renamed"){
+    } elseif ($update["action"] == "renamed") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> renamed the repository.";
     } else {
         return;
@@ -383,10 +385,11 @@ function gEventRepository($update)
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
 }
 
-function gEventRelease($update) {
+function gEventRelease($update)
+{
     $msgText = "🚀 in " . makeRepoName($update);
     $relName = $update["release"]["name"];
-    if (! $relName || $relName == "") {
+    if (!$relName || $relName == "") {
         $relName = $update["release"]["tag_name"];
     }
 
@@ -395,7 +398,16 @@ function gEventRelease($update) {
         if ($update["release"]["prerelease"] == true) {
             $msgText .= "pre-";
         }
-        $msgText .= "release\n  <a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a>" ;
+        $msgText .= "release\n<a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a>";
+        if ($update["release"]["body"]) {
+            $msgText .= "\n\n" . $update["release"]["body"];
+        }
+    } elseif ($update["action"] == "deleted") {
+        $msgText .= "\n<b>" . makeName($update) . "</b> deleted ";
+        if ($update["release"]["prerelease"] == true) {
+            $msgText .= "pre-";
+        }
+        $msgText .= "release " . $relName . ".";
     } else {
         return;
     }

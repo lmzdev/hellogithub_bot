@@ -141,18 +141,17 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $welcome_msg = "Hi 🙋!\nGo to  <i>github.com/your-username/your-repository >> Settings</i>  and add this URL as new Webhook (<b>application/JSON</b>): \n\n";
+            $welcome_msg = "Hi 🙋!\nGo to  <i>github.com / your-username / your-repository >> Settings</i>  and add this URL as new Webhook (<b>application/JSON</b>): \n\n";
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
-        } else if ($text === "Hello" || $text === "Hi") {
-            apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you'));
+        } else if ($text === "Hello" || $text === "Hi" || $text === "Hallo") {
+            apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you!'));
         } else if (strpos($text, "/stop") === 0) {
             // Nothing to stop at all
         }
     } else {
     }
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -398,16 +397,16 @@ function gEventRelease($update)
         if ($update["release"]["prerelease"] == true) {
             $msgText .= "pre-";
         }
-        $msgText .= "release\n<a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a>";
+        $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
         if ($update["release"]["body"]) {
-            $msgText .= "\n\n" . $update["release"]["body"];
+            $msgText .= "\n═════════════\n" . $update["release"]["body"];
         }
     } elseif ($update["action"] == "deleted") {
         $msgText .= "\n<b>" . makeName($update) . "</b> deleted ";
         if ($update["release"]["prerelease"] == true) {
             $msgText .= "pre-";
         }
-        $msgText .= "release " . $relName . ".";
+        $msgText .= "release <b>" . $relName . "</b>.";
     } else {
         return;
     }

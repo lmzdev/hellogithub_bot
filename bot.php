@@ -141,13 +141,13 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $welcome_msg = "Hi 🙋!\nGo to  <i>GitHub >> my-account/my-repo >> Settings</i>  and add this URL as new Webhook (application/JSON): \n\n";
+            $welcome_msg = "Hi 🙋!\nGo to  <i>github.com/your-username/your-repository >> Settings</i>  and add this URL as new Webhook (<b>application/JSON</b>): \n\n";
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } else if ($text === "Hello" || $text === "Hi") {
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you'));
         } else if (strpos($text, "/stop") === 0) {
-            // stop now
+            // Nothing to stop at all
         }
     } else {
     }
@@ -239,7 +239,7 @@ function gEventPush($update)
         $commit = $update["head_commit"];
         $hash = substr($commit["id"], 0, 7);
         $msg = explode("\n", $commit["message"])[0];
-        $datetime = date_format(date_create($commit["timestamp"]), "l, H:i:s");
+        $datetime = date_format(date_create($commit["timestamp"]), DATETIME_FORMAT);
 
         $msgText .= "\n\nHEAD at <a href='" . $commit["url"] . "' >" . $hash . "</a> from " . $datetime . " ";
         $msgText .= "\n<b>" . $msg . "</b>";

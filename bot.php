@@ -359,7 +359,7 @@ function gEventPullRequest($update)
 function gEventCreateRef($update)
 {
     $msgText = "🔶 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update) . "</b> created " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
+    $msgText .= "\n<b>" . makeName($update, false) . "</b> created " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
     return $msgText;
 }
@@ -441,7 +441,7 @@ function gEventStar($update)
 {
     if ($update["action"] === "created") {
         $msgText = "🌟 ". makeRepoName($update);
-        $msgText .= " starred by <b>".makeName($update)."</b>";
+        $msgText .= " has been starred by <b>".makeName($update)."</b>";
         return $msgText;
     }
 }

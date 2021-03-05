@@ -182,31 +182,37 @@ function getFingerprint($sshPublicKey)
     }
     $content = explode(' ', $sshPublicKey, 3);
     $fingerprint = base64_encode(hash('sha256', base64_decode($content[1]), true));
-    return hash('sha256',$content[1]);
+    return $fingerprint;
 }
 
-function makeName($update)
+function makeName($update, $withHyperlink = true)
 {
+    $senderLogin = $withHyperlink?makeNameWithHyperlink($update):$update["sender"]["login"];
+
     # Head commit has a username, but it differs from the one who pushed -> return who pushed
     # ...if someone else merges your branch or pull request
     if ($update["head_commit"]["author"]["username"] && $update["head_commit"]["author"]["username"] != $update["sender"]["login"]) {
-        return $update["sender"]["login"];
+        return $senderLogin;
     }
 
     # Try to get 'name(username)' from head commit
     $u_name = $update["head_commit"]["author"]["name"];
-    if ($u_name != "" && $update["head_commit"]["author"]["username"]) {
+    if ($u_name != "" && $update["head_commit"]["author"]["username"] != "") {
         $u_name .= " (" . $update["head_commit"]["author"]["username"] . ")";
     }
     # From head commit: If no name specified, try username only 
-    if ($u_name == "") {
-        $u_name = $update["head_commit"]["author"]["username"];
-    }
+    $u_name = $update["head_commit"]["author"]["username"];
+    
     # Default to username who pushed
     if ($u_name == "") {
-        $u_name = $update["sender"]["login"];
+        $u_name = $senderLogin;
     }
     return $u_name;
+}
+
+function makeNameWithHyperlink($update)
+{
+    return "<a href='" . $update["sender"]["html_url"] . "' >" . $update["sender"]["login"] . "</a>";
 }
 
 function makeRepoName($update)
@@ -274,15 +280,15 @@ function gEventIssues($update)
     $reponame = " in " . makeRepoName($update);
     if ($update["action"] === "opened") {
         $msgText .= "🟩" . $reponame;
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . makeName($update) . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] === "closed") {
         $msgText .= "🟥" . $reponame;
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . makeName($update) . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     } elseif ($update["action"] == "reopened") {
         $msgText .= "🟨" . $reponame;
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> re-opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . makeName($update) . "</b> re-opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     }
 
@@ -293,9 +299,9 @@ function gEventMember($update)
 {
     $msgText = "🧑‍💻 in " . makeRepoName($update);
     if ($update["action"] === "added") {
-        $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been added as a collaborator!";
+        $msgText .= "\n<b><a href='" . $update["member"]["html_url"] ."'>". $update["member"]["login"] . "</a></b> has been added as a collaborator!";
     } elseif ($update["action"] === "removed") {
-        $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been removed from this repository";
+        $msgText .= "\n<b><a href='" . $update["member"]["html_url"] ."'>". $update["member"]["login"] . "</a></b> has been removed from this repository";
     } else {
         return;
     }
@@ -307,7 +313,7 @@ function gEventDeployKey($update)
 {
     $msgText = "🔑 in " . makeRepoName($update);
     if ($update["action"] === "created") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> added a new SSH key:";
+        $msgText .= "\n<b>" . makeName($update, false) . "</b> added a new SSH key:";
         $msgText .= " <b>" . $update["key"]["title"] . "</b> \n<code>SHA256:" . getFingerprint($update["key"]["key"]) . "</code>";
 
         if ($update["key"]["read_only"] == true) {
@@ -316,7 +322,7 @@ function gEventDeployKey($update)
             $msgText .= "\nPermissions: <b>Read/Write</b>";
         }
     } else if ($update["action"] === "deleted") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> deleted a SSH key:";
+        $msgText .= "\n<b>" . makeName($update, false) . "</b> removed SSH key ";
         $msgText .= " <b>" . $update["key"]["title"] . "</b>";
     }
 
@@ -328,12 +334,12 @@ function gEventPullRequest($update)
     $msgText = "🔷 in " . makeRepoName($update);
 
     if ($update["action"] === "opened" || $update["action"] === "reopened") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . makeName($update, false). "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
         $msgText .= "\n<code>[" . $update["pull_request"]["base"]["repo"]["full_name"] . "] " . $update["pull_request"]["base"]["ref"];
         $msgText .= " ← [" . $update["pull_request"]["head"]["repo"]["full_name"] . "] " . $update["pull_request"]["head"]["ref"] . "</code>";
     } elseif ($update["action"] === "closed") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
+        $msgText .= "\n<b>" . makeName($update, false) . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
         if ($update["pull_request"]["merged"] == true) {
             $msgText .= "\n\n✅ <b>#" . $update["pull_request"]["number"] . " successfully merged!</b>";
@@ -341,7 +347,7 @@ function gEventPullRequest($update)
             $msgText .= "\n\n⛔ <b>#" . $update["pull_request"]["number"] . " was closed.</b>";
         }
     } elseif ($update["action"] === "synchronize") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
+        $msgText .= "\n<b>" . makeName($update, false) . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
     } else {
         return;
     }
@@ -378,15 +384,15 @@ function gEventRepository($update)
     $msgText = "🔶 in " . makeRepoName($update);
 
     if ($update["action"] === "edited" && $update["changes"]["default_branch"]) {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> changed default branch from <code>" . $update["changes"]["default_branch"]["from"] . "</code> to <code>" . $update["repository"]["default_branch"] . "</code>";
+        $msgText .= "\n<b>" . makeName($update) . "</b> changed default branch from <code>" . $update["changes"]["default_branch"]["from"] . "</code> to <code>" . $update["repository"]["default_branch"] . "</code>";
     } elseif ($update["action"] === "deleted") {
-        $msgText .= "\n🗑 <b>" . $update["sender"]["login"] . "</b> deleted the repository.";
+        $msgText .= "\n🗑 <b>" . makeName($update) . "</b> deleted the repository.";
     } elseif ($update["action"] === "archived") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> archived the repository.";
+        $msgText .= "\n<b>" . makeName($update) . "</b> archived the repository.";
     } elseif ($update["action"] === "unarchived") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> restored the repository from archive.";
+        $msgText .= "\n<b>" . makeName($update) . "</b> restored the repository from archive.";
     } elseif ($update["action"] === "renamed") {
-        $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> renamed the repository.";
+        $msgText .= "\n<b>" . makeName($update) . "</b> renamed the repository.";
     } else {
         return;
     }
@@ -397,7 +403,7 @@ function gEventRepository($update)
 function gEventRelease($update)
 {
     $msgText = "🚀 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update) . "</b>";
+    $msgText .= "\n<b>" . makeName($update, false) . "</b>";
 
     $relName = $update["release"]["name"];
     if (!$relName || $relName == "") {
@@ -432,6 +438,11 @@ function gEventRelease($update)
 
 function gEventStar($update)
 {
+    if ($update["action"] === "created") {
+        $msgText = "🌟 ". makeRepoName($update);
+        $msgText .= " starred by <b>".makeName($update)."</b>";
+        return $msgText;
+    }
 }
 
 function gEventFork($update)

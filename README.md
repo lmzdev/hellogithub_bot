@@ -1,6 +1,12 @@
 # hellogithub_bot
 Ever wanted to keep track of your repositories the easiest way possible? This tool bridges GitHub's webhook notifications to a Telegram-Bot.
 
+## 🔶 Advantages
+- Productivity: Add to group chats to let small teams keep track of their work
+- Lightweight: Only a single file, runs on cheap hosting plans
+- Privacy: Does not store any data. At all.
+
+
 ## 🔶 Usage
 ### You can use my already existing bot...
 1. 🔗 Go to [t.me/hellogithub_bot](https://t.me/hellogithub_bot)
@@ -11,7 +17,7 @@ Ever wanted to keep track of your repositories the easiest way possible? This to
 ### ... or you can host your own
 1. Create a new bot with [@BotFather](https://t.me/BotFather)
 1. Upload ```bot.php``` to your webspace
-2. Add a ```config.php``` containing your Bot-Token
+2. Add a ```config.php``` containing your Bot-Token. **Do not [publish](https://core.telegram.org/bots#6-botfather) that Token!**
 1. Tell Telegram to use your Bot by calling ```bot.php?webhook&token=<yourbottoken>```
 1. 🤖 Start your Bot and copy webhook url
 3. 📋 Add webhook url to your repository

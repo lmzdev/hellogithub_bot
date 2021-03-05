@@ -387,30 +387,41 @@ function gEventRepository($update)
 function gEventRelease($update)
 {
     $msgText = "🚀 in " . makeRepoName($update);
+    $msgText .= "\n<b>" . makeName($update) . "</b>";
+
     $relName = $update["release"]["name"];
     if (!$relName || $relName == "") {
         $relName = $update["release"]["tag_name"];
     }
+    $preRelease = "";
+    if ($update["release"]["prerelease"] == true) {
+        $preRelease = "pre-";
+    }
 
     if ($update["action"] == "published") {
-        $msgText .= "\n<b>" . makeName($update) . "</b> published ";
-        if ($update["release"]["prerelease"] == true) {
-            $msgText .= "pre-";
-        }
+        $msgText .=  " published ";
+        $msgText .= $preRelease;
         $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
         if ($update["release"]["body"]) {
             $msgText .= "\n═════════════\n" . $update["release"]["body"];
         }
     } elseif ($update["action"] == "deleted") {
-        $msgText .= "\n<b>" . makeName($update) . "</b> deleted ";
-        if ($update["release"]["prerelease"] == true) {
-            $msgText .= "pre-";
-        }
+        $msgText .= " deleted ";
+        $msgText .= $preRelease;
         $msgText .= "release <b>" . $relName . "</b>.";
+    } elseif ($update["action"] == "created" and $update["release"]["draft"] == true) {
+        $msgText .= " drafted ";
+        $msgText .= $preRelease;
+        $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
     } else {
         return;
     }
+
     apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+}
+
+function gEventFork($update)
+{
 }
 
 
@@ -433,6 +444,7 @@ if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot ap
 }
 
 if (!$update) { //abort if request non json
+    header($_SERVER["SERVER_PROTOCOL"] . " 406 Not Acceptable");
     echo "<p><a href='http://t.me/" . BOT_NAME . "'>http://t.me/" . BOT_NAME . "</a></p>";
     exit;
 }
@@ -464,6 +476,9 @@ if ($_GET["chatid"]) {
         gEventRepository($update);
     } elseif ($headerGitHubEvent == "release") {
         gEventRelease($update);
+    } elseif ($headerGitHubEvent == "fork") {
+        gEventFork($update);
     }
+
 } else {
 }

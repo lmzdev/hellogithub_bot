@@ -144,9 +144,29 @@ function processMessage($message)
             $welcome_msg = "Hi 🙋!\nGo to  <i>github.com / your-username / your-repository >> Settings</i>  and add this URL as new Webhook (Content type: <b>application/JSON</b>): \n\n";
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
-        } else if ($text === "Hello" || $text === "Hi" || $text === "Hallo") {
+        } elseif (strpos($text, "/version") === 0) {
+            $hash = hash_file('md5','bot.php');
+            $headcommit  = exec('git rev-parse HEAD');
+            $git_tag = exec('git tag');
+
+            $info_msg =  "<code>┌────Version────┐</code>\n";
+            $info_msg .= "Location: <code>".BOT_URL."</code>\n";
+            if ($git_tag != "") {
+                $info_msg .= "Release <code>".$git_tag."</code>\n";
+            }
+            if ($headcommit != "") {
+                $info_msg .= "HEAD at <code>".$headcommit."</code>\n";
+            }
+            if ($hash != "") {
+                $info_msg .= "MD5 of bot.php <code>".$hash."</code>\n";
+            }
+            $info_msg .= "<code>└───────────────┘</code>";
+
+            apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $info_msg, 'reply_markup' => array('remove_keyboard' => true)));
+
+        } elseif ($text === "Hello" || $text === "Hi" || $text === "Hallo") {
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you!'));
-        } else if (strpos($text, "/stop") === 0) {
+        } elseif (strpos($text, "/stop") === 0) {
             // Nothing to stop at all
         }
     } else {
@@ -422,6 +442,8 @@ function gEventRelease($update)
 
 function gEventFork($update)
 {
+
+
 }
 
 

@@ -191,7 +191,7 @@ function makeName($update, $withHyperlink = true)
 
     # Head commit has a username, but it differs from the one who pushed -> return who pushed
     # ...if someone else merges your branch or pull request
-    if ($update["head_commit"]["author"]["username"] && $update["head_commit"]["author"]["username"] != $update["sender"]["login"]) {
+    if ($update["head_commit"]["author"]["username"] != $update["sender"]["login"]) {
         return $senderLogin;
     }
 
@@ -201,8 +201,9 @@ function makeName($update, $withHyperlink = true)
         $u_name .= " (" . $update["head_commit"]["author"]["username"] . ")";
     }
     # From head commit: If no name specified, try username only 
-    $u_name = $update["head_commit"]["author"]["username"];
-    
+    if ($u_name == "") {
+        $u_name = $update["head_commit"]["author"]["username"];
+    }
     # Default to username who pushed
     if ($u_name == "") {
         $u_name = $senderLogin;
@@ -403,7 +404,7 @@ function gEventRepository($update)
 function gEventRelease($update)
 {
     $msgText = "🚀 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update, false) . "</b>";
+    $msgText .= "\n<b>" . makeName($update) . "</b>";
 
     $relName = $update["release"]["name"];
     if (!$relName || $relName == "") {
@@ -447,6 +448,9 @@ function gEventStar($update)
 
 function gEventFork($update)
 {
+    $msgText = "📤 " . makeRepoName($update)." has been forked to ";
+    $msgText .= "<b><a href='" . $update["forkee"]["html_url"] . "'>" . $update["forkee"]["full_name"] . "</a></b>";
+    return $msgText;
 }
 
 

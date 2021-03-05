@@ -141,29 +141,28 @@ function processMessage($message)
         $text = $message['text'];
 
         if (strpos($text, "/start") === 0) {
-            $welcome_msg = "Hi 🙋!\nGo to  <i>github.com / your-username / your-repository >> Settings</i>  and add this URL as new Webhook (Content type: <b>application/JSON</b>): \n\n";
+            $welcome_msg = "Hi 🙋!\nGo to  <i>github.com / your-username / your-repository >> Settings</i>  and add this URL as new Webhook (Content type: <b>application/JSON</b>)\n\n";
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } elseif (strpos($text, "/version") === 0) {
-            $hash = hash_file('md5','bot.php');
+            $hash = hash_file('md5', 'bot.php');
             $headcommit  = exec('git rev-parse HEAD');
             $git_tag = exec('git tag');
 
-            $info_msg =  "<code>┌────Version────┐</code>\n";
-            $info_msg .= "Location: <code>".BOT_URL."</code>\n";
+            $info_msg =  "<code>┌───╂Version╂───┐</code>\n";
+            $info_msg .= "Location: <code>" . BOT_URL . "</code>\n";
             if ($git_tag != "") {
-                $info_msg .= "Release <code>".$git_tag."</code>\n";
+                $info_msg .= "Release <code>" . $git_tag . "</code>\n";
             }
             if ($headcommit != "") {
-                $info_msg .= "HEAD at <code>".$headcommit."</code>\n";
+                $info_msg .= "HEAD at <code>" . $headcommit . "</code>\n";
             }
             if ($hash != "") {
-                $info_msg .= "MD5 of bot.php <code>".$hash."</code>\n";
+                $info_msg .= "MD5 of <i>'bot.php'</i> <code>" . $hash . "</code>\n";
             }
             $info_msg .= "<code>└───────────────┘</code>";
 
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $info_msg, 'reply_markup' => array('remove_keyboard' => true)));
-
         } elseif ($text === "Hello" || $text === "Hi" || $text === "Hallo") {
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => 'Nice to meet you!'));
         } elseif (strpos($text, "/stop") === 0) {
@@ -176,23 +175,14 @@ function processMessage($message)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function getFingerprint($sshPublicKey, $hashAlgorithm = 'sha256')
+function getFingerprint($sshPublicKey)
 {
     if (substr($sshPublicKey, 0, 8) != 'ssh-rsa ') {
         return;
     }
     $content = explode(' ', $sshPublicKey, 3);
-    switch ($hashAlgorithm) {
-        case 'md5':
-            $fingerprint = join(':', str_split(md5(base64_decode($content[1])), 2));
-            break;
-        case 'sha256':
-            $fingerprint = base64_encode(hash('sha256', base64_decode($content[1]), true));
-            break;
-        default:
-            break;
-    }
-    return $fingerprint;
+    $fingerprint = base64_encode(hash('sha256', base64_decode($content[1]), true));
+    return hash('sha256',$content[1]);
 }
 
 function makeName($update)
@@ -205,15 +195,15 @@ function makeName($update)
 
     # Try to get 'name(username)' from head commit
     $u_name = $update["head_commit"]["author"]["name"];
-    if ($u_name && $update["head_commit"]["author"]["username"]) {
+    if ($u_name != "" && $update["head_commit"]["author"]["username"]) {
         $u_name .= " (" . $update["head_commit"]["author"]["username"] . ")";
     }
     # From head commit: If no name specified, try username only 
-    if (!$u_name) {
+    if ($u_name == "") {
         $u_name = $update["head_commit"]["author"]["username"];
     }
     # Default to username who pushed
-    if (!$u_name) {
+    if ($u_name == "") {
         $u_name = $update["sender"]["login"];
     }
     return $u_name;
@@ -267,8 +257,7 @@ function gEventPush($update)
         $msgText .= "Removed: <b>" . count($commit["removed"]) . "</b>";
         $msgText .= "\n...";
     }
-
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventPing($update)
@@ -276,18 +265,18 @@ function gEventPing($update)
     $msgText = "Ping 🔔!\n";
     $msgText .= "Your repository " . $update["repository"]["html_url"] . " has been connected.\n";
     $msgText .= "\nWise Octocat says: \n   <b>" . $update["zen"] . "</b>";
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventIssues($update)
 {
     $msgText = "";
     $reponame = " in " . makeRepoName($update);
-    if ($update["action"] == "opened") {
+    if ($update["action"] === "opened") {
         $msgText .= "🟩" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
-    } elseif ($update["action"] == "closed") {
+    } elseif ($update["action"] === "closed") {
         $msgText .= "🟥" . $reponame;
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["issue"]["html_url"] . "'>issue #" . $update["issue"]["number"] . "</a>: ";
         $msgText .= "\n  " . $update["issue"]["title"] . "";
@@ -297,26 +286,27 @@ function gEventIssues($update)
         $msgText .= "\n  " . $update["issue"]["title"] . "";
     }
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventMember($update)
 {
     $msgText = "🧑‍💻 in " . makeRepoName($update);
-    if ($update["action"] == "added") {
+    if ($update["action"] === "added") {
         $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been added as a collaborator!";
-    } elseif ($update["action"] == "removed") {
+    } elseif ($update["action"] === "removed") {
         $msgText .= "\n<b>" . $update["member"]["login"] . "</b> has been removed from this repository";
     } else {
         return;
     }
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+
+    return $msgText;
 }
 
 function gEventDeployKey($update)
 {
     $msgText = "🔑 in " . makeRepoName($update);
-    if ($update["action"] == "created") {
+    if ($update["action"] === "created") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> added a new SSH key:";
         $msgText .= " <b>" . $update["key"]["title"] . "</b> \n<code>SHA256:" . getFingerprint($update["key"]["key"]) . "</code>";
 
@@ -325,24 +315,24 @@ function gEventDeployKey($update)
         } else {
             $msgText .= "\nPermissions: <b>Read/Write</b>";
         }
-    } else if ($update["action"] == "deleted") {
+    } else if ($update["action"] === "deleted") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> deleted a SSH key:";
         $msgText .= " <b>" . $update["key"]["title"] . "</b>";
     }
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventPullRequest($update)
 {
     $msgText = "🔷 in " . makeRepoName($update);
 
-    if ($update["action"] == "opened" || $update["action"] == "reopened") {
+    if ($update["action"] === "opened" || $update["action"] === "reopened") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> opened <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
         $msgText .= "\n<code>[" . $update["pull_request"]["base"]["repo"]["full_name"] . "] " . $update["pull_request"]["base"]["ref"];
         $msgText .= " ← [" . $update["pull_request"]["head"]["repo"]["full_name"] . "] " . $update["pull_request"]["head"]["ref"] . "</code>";
-    } elseif ($update["action"] == "closed") {
+    } elseif ($update["action"] === "closed") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> closed <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a>: ";
         $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
         if ($update["pull_request"]["merged"] == true) {
@@ -350,14 +340,13 @@ function gEventPullRequest($update)
         } else {
             $msgText .= "\n\n⛔ <b>#" . $update["pull_request"]["number"] . " was closed.</b>";
         }
-    } elseif ($update["action"] == "synchronize") {
+    } elseif ($update["action"] === "synchronize") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> triggered an update on <a href='" . $update["pull_request"]["html_url"] . "'>pull request #" . $update["pull_request"]["number"] . "</a> ";
-        // $msgText .= "\n<b>" . $update["pull_request"]["title"] . "</b>";
     } else {
         return;
     }
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventCreateRef($update)
@@ -365,7 +354,7 @@ function gEventCreateRef($update)
     $msgText = "🔶 in " . makeRepoName($update);
     $msgText .= "\n<b>" . makeName($update) . "</b> created " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventDeleteRef($update)
@@ -373,7 +362,7 @@ function gEventDeleteRef($update)
     $msgText = "🔶 in " . makeRepoName($update);
     $msgText .= "\n<b>" . makeName($update) . "</b> deleted " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventPublic($update)
@@ -381,27 +370,28 @@ function gEventPublic($update)
     $msgText = "🎉 " . makeRepoName($update);
     $msgText .= "\nis now publicly available!";
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
 }
 
 function gEventRepository($update)
 {
     $msgText = "🔶 in " . makeRepoName($update);
 
-    if ($update["action"] == "edited" && $update["changes"]["default_branch"]) {
+    if ($update["action"] === "edited" && $update["changes"]["default_branch"]) {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> changed default branch from <code>" . $update["changes"]["default_branch"]["from"] . "</code> to <code>" . $update["repository"]["default_branch"] . "</code>";
-    } elseif ($update["action"] == "deleted") {
+    } elseif ($update["action"] === "deleted") {
         $msgText .= "\n🗑 <b>" . $update["sender"]["login"] . "</b> deleted the repository.";
-    } elseif ($update["action"] == "archived") {
+    } elseif ($update["action"] === "archived") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> archived the repository.";
-    } elseif ($update["action"] == "unarchived") {
+    } elseif ($update["action"] === "unarchived") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> restored the repository from archive.";
-    } elseif ($update["action"] == "renamed") {
+    } elseif ($update["action"] === "renamed") {
         $msgText .= "\n<b>" . $update["sender"]["login"] . "</b> renamed the repository.";
     } else {
         return;
     }
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+
+    return $msgText;
 }
 
 function gEventRelease($update)
@@ -418,18 +408,18 @@ function gEventRelease($update)
         $preRelease = "pre-";
     }
 
-    if ($update["action"] == "published") {
+    if ($update["action"] === "published") {
         $msgText .=  " published ";
         $msgText .= $preRelease;
         $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
         if ($update["release"]["body"]) {
             $msgText .= "\n═════════════\n" . $update["release"]["body"];
         }
-    } elseif ($update["action"] == "deleted") {
+    } elseif ($update["action"] === "deleted") {
         $msgText .= " deleted ";
         $msgText .= $preRelease;
         $msgText .= "release <b>" . $relName . "</b>.";
-    } elseif ($update["action"] == "created" and $update["release"]["draft"] == true) {
+    } elseif ($update["action"] === "created" and $update["release"]["draft"] == true) {
         $msgText .= " drafted ";
         $msgText .= $preRelease;
         $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
@@ -437,13 +427,15 @@ function gEventRelease($update)
         return;
     }
 
-    apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $msgText));
+    return $msgText;
+}
+
+function gEventStar($update)
+{
 }
 
 function gEventFork($update)
 {
-
-
 }
 
 
@@ -451,7 +443,7 @@ function gEventFork($update)
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
 
-if ($_GET["token"] == BOT_TOKEN) {        // when gets called by telegram bot api
+if ($_GET["token"] === BOT_TOKEN) {        // when gets called by telegram bot api
     if (isset($update["message"])) {
         processMessage($update["message"]);
     } elseif (isset($_GET["webhook"])) {
@@ -475,32 +467,37 @@ if ($_GET["chatid"]) {
 
     $headerGitHubEvent = $_SERVER['HTTP_X_GITHUB_EVENT'];
     // $filter=$_GET["branch"];
+    $replyTo = "";
 
-    if ($headerGitHubEvent == "push") {
-        gEventPush($update);
-    } elseif ($headerGitHubEvent == "ping") {
-        gEventPing($update);
-    } elseif ($headerGitHubEvent == "issues") {
-        gEventIssues($update);
-    } elseif ($headerGitHubEvent == "member") {
-        gEventMember($update);
-    } elseif ($headerGitHubEvent == "deploy_key") {
-        gEventDeployKey($update);
-    } elseif ($headerGitHubEvent == "pull_request") {
-        gEventPullRequest($update);
-    } elseif ($headerGitHubEvent == "delete") {
-        gEventDeleteRef($update);
-    } elseif ($headerGitHubEvent == "create") {
-        gEventCreateRef($update);
-    } elseif ($headerGitHubEvent == "public") {
-        gEventPublic($update);
-    } elseif ($headerGitHubEvent == "repository") {
-        gEventRepository($update);
-    } elseif ($headerGitHubEvent == "release") {
-        gEventRelease($update);
-    } elseif ($headerGitHubEvent == "fork") {
-        gEventFork($update);
+    if ($headerGitHubEvent === "push") {
+        $replyTo = gEventPush($update);
+    } elseif ($headerGitHubEvent === "ping") {
+        $replyTo =  gEventPing($update);
+    } elseif ($headerGitHubEvent === "issues") {
+        $replyTo =  gEventIssues($update);
+    } elseif ($headerGitHubEvent === "member") {
+        $replyTo =  gEventMember($update);
+    } elseif ($headerGitHubEvent === "deploy_key") {
+        $replyTo =  gEventDeployKey($update);
+    } elseif ($headerGitHubEvent === "pull_request") {
+        $replyTo =  gEventPullRequest($update);
+    } elseif ($headerGitHubEvent === "delete") {
+        $replyTo = gEventDeleteRef($update);
+    } elseif ($headerGitHubEvent === "create") {
+        $replyTo = gEventCreateRef($update);
+    } elseif ($headerGitHubEvent === "public") {
+        $replyTo =  gEventPublic($update);
+    } elseif ($headerGitHubEvent === "repository") {
+        $replyTo = gEventRepository($update);
+    } elseif ($headerGitHubEvent === "release") {
+        $replyTo = gEventRelease($update);
+    } elseif ($headerGitHubEvent === "fork") {
+        $replyTo = gEventFork($update);
+    } elseif ($headerGitHubEvent === "star") {
+        $replyTo = gEventStar($update);
     }
 
+    ($replyTo != "")?apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $replyTo)):exit;
+    
 } else {
 }

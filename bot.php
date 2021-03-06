@@ -152,10 +152,10 @@ function processMessage($message)
             $info_msg =  "<code>┌───╂Version╂───┐</code>\n";
             $info_msg .= "Location: <code>" . BOT_URL . "</code>\n";
             if ($git_tag != "") {
-                $info_msg .= "Release <code>" . $git_tag . "</code>\n";
+                $info_msg .= "Release tag <code>" . $git_tag . "</code>\n";
             }
             if ($headcommit != "") {
-                $info_msg .= "HEAD at <code>" . $headcommit . "</code>\n";
+                $info_msg .= "HEAD at commit <code>" . substr($headcommit, 0, 7) . "</code>\n";
             }
             if ($hash != "") {
                 $info_msg .= "MD5 of <i>'bot.php'</i> <code>" . $hash . "</code>\n";
@@ -375,7 +375,7 @@ function gEventCreateRef($update)
 function gEventDeleteRef($update)
 {
     $msgText = "🔶 in " . makeRepoName($update);
-    $msgText .= "\n<b>" . makeName($update) . "</b> deleted " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
+    $msgText .= "\n<b>" . makeName($update, false) . "</b> deleted " . $update["ref_type"] . " <code>" . $update["ref"] . "</code>";
 
     return $msgText;
 }

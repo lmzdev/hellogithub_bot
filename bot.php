@@ -224,10 +224,12 @@ function makeRepoName($update)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function gEventPush($update)
-{
-    if (count($update["commits"]) == 0) {
+{   
+    $count = count($update["commits"]);
+    if ($count === 0) {
         return;
     }
+
     $r = explode("/", $update["ref"]);
     $branch = array_pop($r);
     $ref = array_pop($r);
@@ -236,9 +238,15 @@ function gEventPush($update)
 
     $msgText = "🔶 in " . makeRepoName($update);
     $msgText .= " on <code>" . $ref . "/" . $branch . " </code>\n";
-    $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . count($update["commits"]) . "</b> commits:";
+    
+    if ($count === 1) {
+        $msgText .= "<b>" . $u_name . "</b> pushed a single commit:";
+    } else {
+        $msgText .= "<b>" . $u_name . "</b> pushed a total of <b>" . $count . "</b> commits:";
+    }
+    
 
-    if (count($update["commits"]) <= G_SHOWMAXCOMMITS) {
+    if ($count <= G_SHOWMAXCOMMITS) {
         $all_commits = array_reverse($update["commits"]);
         foreach ($all_commits as $commit) {
             $hash = substr($commit["id"], 0, 7);
@@ -302,7 +310,7 @@ function gEventMember($update)
     if ($update["action"] === "added") {
         $msgText .= "\n<b><a href='" . $update["member"]["html_url"] ."'>". $update["member"]["login"] . "</a></b> has been added as a collaborator!";
     } elseif ($update["action"] === "removed") {
-        $msgText .= "\n<b><a href='" . $update["member"]["html_url"] ."'>". $update["member"]["login"] . "</a></b> has been removed from this repository";
+        $msgText .= "\n<b><a href='" . $update["member"]["html_url"] ."'>". $update["member"]["login"] . "</a></b> has been removed from this repository.";
     } else {
         return;
     }

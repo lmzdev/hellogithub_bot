@@ -87,6 +87,7 @@ function apiRequest($method, $parameters)
     if ($parameters['parse_mode'] == "") {
         $parameters['parse_mode'] = "html";
     }
+    $parameters['disable_web_page_preview'] = true;
     foreach ($parameters as $key => &$val) {
         // encoding to JSON array parameters, for example reply_markup
         if (!is_numeric($val) && !is_string($val)) {
@@ -382,7 +383,7 @@ function gEventDeleteRef($update)
 function gEventPublic($update)
 {
     $msgText = "🎉 " . makeRepoName($update);
-    $msgText .= "\nis now publicly available!";
+    $msgText .= "\nis now <b>publicly available</b> on GitHub!";
 
     return $msgText;
 }
@@ -423,9 +424,9 @@ function gEventRelease($update)
     }
 
     if ($update["action"] === "published") {
-        $msgText .=  " published a";
+        $msgText .=  " published a ";
         $msgText .= $preRelease;
-        $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
+        $msgText .= "release: <b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
         if ($update["release"]["body"]) {
             $msgText .= "\n---\n" . $update["release"]["body"];
         }

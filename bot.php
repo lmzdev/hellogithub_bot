@@ -51,8 +51,7 @@ function exec_curl_request($handle)
     curl_close($handle);
 
     if ($http_code >= 500) {
-        // do not wat to DDOS server if something goes wrong
-        sleep(10);
+        sleep(5);
         return false;
     } else if ($http_code != 200) {
         $response = json_decode($response, true);
@@ -145,7 +144,7 @@ function processMessage($message)
             $compose_url = BOT_URL . '?chatid=' . $chat_id;
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $welcome_msg . "<code>" . $compose_url . "</code>", 'reply_markup' => array('remove_keyboard' => true)));
         } elseif (strpos($text, "/version") === 0) {
-            $hash = hash_file('md5', 'bot.php');
+            // $hash = hash_file('md5', 'bot.php');
             $headcommit  = exec('git rev-parse HEAD');
             $git_tag = exec('git tag');
 
@@ -157,9 +156,9 @@ function processMessage($message)
             if ($headcommit != "") {
                 $info_msg .= "HEAD at commit <code>" . substr($headcommit, 0, 7) . "</code>\n";
             }
-            if ($hash != "") {
-                $info_msg .= "MD5 of <i>'bot.php'</i> <code>" . $hash . "</code>\n";
-            }
+            // if ($hash != "") {
+            //     $info_msg .= "MD5 of <i>'bot.php'</i> <code>" . $hash . "</code>\n";
+            // }
             $info_msg .= "<code>└───────────────┘</code>";
 
             apiRequest("sendMessage", array('chat_id' => $chat_id, "text" => $info_msg, 'reply_markup' => array('remove_keyboard' => true)));
@@ -424,11 +423,11 @@ function gEventRelease($update)
     }
 
     if ($update["action"] === "published") {
-        $msgText .=  " published ";
+        $msgText .=  " published a";
         $msgText .= $preRelease;
         $msgText .= "release\n<b><a href='" . $update["release"]["html_url"] . "'>" . $relName . "</a></b>";
         if ($update["release"]["body"]) {
-            $msgText .= "\n═════════════\n" . $update["release"]["body"];
+            $msgText .= "\n---\n" . $update["release"]["body"];
         }
     } elseif ($update["action"] === "deleted") {
         $msgText .= " deleted ";
@@ -459,6 +458,16 @@ function gEventFork($update)
     $msgText = "📤 " . makeRepoName($update)." has been forked to ";
     $msgText .= "<b><a href='" . $update["forkee"]["html_url"] . "'>" . $update["forkee"]["full_name"] . "</a></b>";
     return $msgText;
+}
+
+function gEventWorkflow($update)
+{
+    $msgText = "▶️ in ". makeRepoName($update) . " GitHub Actions workflow <code>" . $update["wokflow"]["name"] . "</code>" ;
+    if ($update["action"] === "completed") {
+        $msgText .= "\ncompleted with state: ";
+        $msgText .= "\n<b>" . $update["wokflow"]["state"] . "</b>" ;
+        return $msgText;
+    }
 }
 
 
@@ -518,6 +527,8 @@ if ($_GET["chatid"]) {
         $replyTo = gEventFork($update);
     } elseif ($headerGitHubEvent === "star") {
         $replyTo = gEventStar($update);
+    } elseif ($headerGitHubEvent === "workflow_run") {
+        $replyTo = gEventWorkflow($update);
     }
 
     ($replyTo != "")?apiRequest("sendMessage", array('chat_id' => $_GET["chatid"], "text" => $replyTo)):exit;

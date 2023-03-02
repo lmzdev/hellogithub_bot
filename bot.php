@@ -462,12 +462,12 @@ function gEventFork($update)
 
 function gEventWorkflow($update)
 {
-    $msgText = "▶️ in ". makeRepoName($update) . " on <code>" . $update["workflow_run"]["head_branch"] . "</code> GitHub Actions workflow <b>" . $update["workflow_run"]["name"] . "<b>" ;
-    if ($update["action"] === "completed") {
-        $msgText .= "\ncompleted with state: ";
-        $msgText .= "<b>" .$update["workflow_run"]["state"] . "/" . $update["workflow_run"]["conclusion"] . "</b>" ;
+    $msgText = "▶️ in ". makeRepoName($update) . " on <code>" . $update["workflow_run"]["head_branch"] . "</code> workflow <b>" . $update["workflow_run"]["name"] . "</b>" ;
+    if ($update["action"] === "completed" || $update["action"] === "requested") {
+        $msgText .= "\nnow in state: <b>" . $update["workflow_run"]["status"] . "/" . $update["workflow_run"]["conclusion"] . "</b>" ;
         return $msgText;
-    }
+    } 
+
 }
 
 
